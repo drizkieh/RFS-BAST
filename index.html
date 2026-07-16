@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integra Solusi Mandiri — Operational Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:        #0d1117;
+  --bg-card:   #161b22;
+  --bg-card2:  #1c2128;
+  --border:    #30363d;
+  --border2:   #21262d;
+  --txt:       #e6edf3;
+  --muted:     #8b949e;
+  --dim:       #484f58;
+  --green:     #3fb950;
+  --orange:    #d29922;
+  --blue:      #58a6ff;
+  --red:       #f85149;
+  --purple:    #bc8cff;
+  --brand-or:  #f97316;
+  --brand-gr:  #22c55e;
+
+  --c0: #22c55e;   /* ISM */
+  --c1: #ef4444;   /* Closed */
+  --c2: #3b82f6;   /* Tower Provider */
+  --c3: #a855f7;   /* Telkomsel */
+  --c4: #f97316;   /* Telkom Infra */
+  --c5: #6b7280;   /* ZTE */
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:13px;}
+
+/* NAV */
+.navbar{background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;height:52px;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;margin-right:32px;}
+.brand-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--brand-or),#fb923c);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+.brand-name{font-weight:700;font-size:14px;color:var(--txt);line-height:1.1;}
+.brand-sub{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
+.nav-tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;background:var(--brand-gr);color:#fff;}
+
+/* LAYOUT */
+.main{padding:18px;display:flex;flex-direction:column;gap:16px;}
+
+/* STATUS */
+.status-bar{background:var(--bg-card2);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* GRID */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.ch{padding:12px 16px 10px;border-bottom:1px solid var(--border2);}
+.ct{font-size:13px;font-weight:600;}
+.cs{font-size:11px;color:var(--muted);margin-top:2px;}
+.cb{padding:12px 16px 14px;}
+
+/* DONUT AREA */
+.donut-wrap{display:flex;align-items:center;gap:4px;}
+.legend{flex:1;padding-left:8px;}
+.li{display:flex;align-items:center;gap:7px;padding:3.5px 0;font-size:11px;color:var(--muted);}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.lv{color:var(--txt);font-weight:600;margin-left:auto;font-variant-numeric:tabular-nums;}
+
+/* TABLE */
+.gt{width:100%;border-collapse:collapse;font-size:11.5px;}
+.gt th{background:var(--bg-card2);color:var(--muted);font-weight:600;padding:7px 10px;text-align:center;border-bottom:1px solid var(--border);font-size:10.5px;white-space:nowrap;}
+.gt th:first-child{text-align:left;}
+.gt td{padding:5px 10px;border-bottom:1px solid var(--border2);color:var(--muted);text-align:center;white-space:nowrap;}
+.gt td:first-child{text-align:left;}
+.gt tr:last-child td{border-bottom:none;}
+.rg td{color:var(--txt);font-weight:700;}
+.rs td{padding-left:22px;font-size:11px;}
+.val-hi{color:var(--green)!important;font-weight:700!important;}
+.val-num{color:var(--txt);}
+.t-pad{padding:0 0 14px;}
+
+/* S-CURVE */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.kpi{background:var(--bg-card2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;}
+.kl{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px;}
+.kv{font-size:30px;font-weight:700;line-height:1;}
+.kv.g{color:var(--green);}
+.kv.b{color:var(--blue);}
+.kv.r{color:var(--red);}
+.kv.o{color:var(--orange);}
+
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 14px;}
+.fl{font-size:11px;color:var(--muted);}
+.fs{background:var(--bg-card2);border:1px solid var(--border);color:var(--txt);border-radius:6px;padding:4px 26px 4px 9px;font-size:11px;font-family:inherit;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
+.fb{padding:4px 13px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;font-family:inherit;}
+.fb:hover{color:var(--txt);background:var(--bg-card2);}
+.fb.active{background:var(--brand-gr);border-color:var(--brand-gr);color:#fff;}
+
+
+
+hr.div{border:none;border-top:1px solid var(--border);margin:0;}
+.sp{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.notes{font-size:10px;color:var(--dim);padding:4px 16px 10px;font-family:'JetBrains Mono',monospace;}
+
+@media(max-width:768px){.row2{grid-template-columns:1fr;}.kpi-row{grid-template-columns:repeat(2,1fr);}.donut-wrap{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">
+    <div class="brand-logo">I</div>
+    <div>
+      <div class="brand-name">INTEGRA</div>
+      <div class="brand-sub">SOLUSI MANDIRI</div>
+    </div>
+  </div>
+  <div class="nav-tab">Operational Dashboard</div>
+</nav>
+
+<div class="main">
+
+  <!-- STATUS -->
+  <div class="status-bar">
+    <div class="dot"></div>
+    <span id="statusText"><span class="sp"></span>Menghubungkan ke Google Sheets…</span>
+    <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px" id="lastRefresh"></span>
+  </div>
+
+  <!-- ── GAP ANALYSIS SECTION ── -->
+  <div class="row2">
+
+    <!-- RFS -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">Gap Analysis RFS — by Responsible</div>
+        <div class="cs" id="rfs-sub">Total SITEID PO: <b id="rfs-total">—</b></div>
+      </div>
+      <div class="cb">
+        <div class="donut-wrap">
+          <div id="donut-rfs" style="flex:0 0 190px;"></div>
+          <div class="legend" id="leg-rfs"><span class="sp"></span>Memuat…</div>
+        </div>
+      </div>
+      <div class="t-pad">
+        <table class="gt" id="tbl-rfs">
+          <thead>
+            <tr>
+              <th>Row Labels</th>
+              <th id="rfs-th-r06">R06 Jawa Timur</th>
+              <th id="rfs-th-r09">R09 Sulawesi</th>
+              <th>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody id="rfs-tbody">
+            <tr><td colspan="4" style="text-align:center;padding:14px;color:var(--dim)"><span class="sp"></span>Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="notes" id="rfs-notes"></div>
+    </div>
+
+    <!-- BAST -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">Gap Analysis BAST — by Responsible</div>
+        <div class="cs" id="bast-sub">Total SITEID PO: <b id="bast-total">—</b></div>
+      </div>
+      <div class="cb">
+        <div class="donut-wrap">
+          <div id="donut-bast" style="flex:0 0 190px;"></div>
+          <div class="legend" id="leg-bast"><span class="sp"></span>Memuat…</div>
+        </div>
+      </div>
+      <div class="t-pad">
+        <table class="gt" id="tbl-bast">
+          <thead>
+            <tr>
+              <th>Row Labels</th>
+              <th id="bast-th-r06">R06 Jawa Timur</th>
+              <th id="bast-th-r08">R08 Kalimantan</th>
+              <th id="bast-th-r09">R09 Sulawesi</th>
+              <th id="bast-th-r10">R10 Sumbagteng</th>
+              <th>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody id="bast-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:14px;color:var(--dim)"><span class="sp"></span>Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="notes" id="bast-notes"></div>
+    </div>
+
+  </div><!-- /row2 -->
+
+  <hr class="div">
+
+  <!-- ── S-CURVE SECTION ── -->
+  <div class="card">
+    <div class="ch" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div class="ct">Target RFS ISM Reeng</div>
+        <div class="cs">S-Curve Progress &amp; Gap Analysis</div>
+      </div>
+      <div class="filter-bar" style="padding:0;">
+        <span class="fl">Periode:</span>
+        <select class="fs" id="selPeriode"><option value="all">Semua Bulan</option></select>
+        <button class="fb active" data-r="all">All</button>
+        <button class="fb" data-r="R08 Kalimantan">Kalimantan</button>
+        <button class="fb" data-r="R09 Sulawesi">Sulawesi</button>
+        <button class="fb" data-r="R10 Sumbagteng">Sumbagteng</button>
+      </div>
+    </div>
+
+    <div class="cb">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kl">RFS Cumulative</div><div class="kv g" id="k-rfs">—</div></div>
+        <div class="kpi"><div class="kl">Target Cumulative</div><div class="kv b" id="k-tgt">—</div></div>
+        <div class="kpi"><div class="kl">GAP</div><div class="kv r" id="k-gap">—</div></div>
+        <div class="kpi"><div class="kl">Achievement</div><div class="kv o" id="k-ach">—</div></div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:2px;">RFS Target vs Actual Cumulative</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">S-Curve progress mingguan</div>
+        <div id="chart-sc" style="min-height:300px;"></div>
+        <div class="notes" id="sc-notes" style="padding:6px 0 0;"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════
+const SHEET_ID = '1BSehj7HUi_IPcIQuFoIzbiYnEOb4Ymqb7-SpXPkRcyY';
+let CFG = {
+  rfsId  : SHEET_ID,
+  bastId : SHEET_ID,
+};
+
+// COLORS
+const PAL = ['#22c55e','#ef4444','#3b82f6','#a855f7','#f97316','#6b7280','#06b6d4','#eab308','#ec4899'];
+
+// ═══════════════════════════════════════
+//  GVIZ FETCH
+// ═══════════════════════════════════════
+async function gviz(sheetId, tabName) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+  const r = await fetch(url);
+  const t = await r.text();
+  const json = JSON.parse(t.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);?\s*$/)[1]);
+  if (json.status === 'error') throw new Error(json.errors?.[0]?.detailed_message || 'GViz error');
+  return json.table;
+}
+
+// Parse gviz table → array of objects using row 0 as header (skip rows with all-null cells)
+function parseGviz(table) {
+  const rows = table.rows || [];
+  if (!rows.length) return { headers: [], data: [] };
+
+  // gviz already auto-detects the sheet's header row and exposes labels in table.cols —
+  // trust that first, since guessing from rows breaks when there are blank rows above the header.
+  const colHeaders = (table.cols || []).map(c => (c.label || '').trim());
+  const hasLabels = colHeaders.some(h => h);
+
+  let headers, dataRows;
+  if (hasLabels) {
+    headers = colHeaders;
+    dataRows = rows; // gviz already excludes the header row from `rows`
+  } else {
+    // Fallback: no labels detected (e.g. header row wasn't auto-recognized) —
+    // manually find the first non-empty row and treat it as the header.
+    let hIdx = 0;
+    for (let i = 0; i < Math.min(5, rows.length); i++) {
+      const r = rows[i];
+      if (r.c && r.c.some(c => c && c.v !== null)) { hIdx = i; break; }
+    }
+    headers = rows[hIdx].c.map(c => c?.v || '');
+    dataRows = rows.slice(hIdx + 1);
+  }
+
+  const data = [];
+  dataRows.forEach(r => {
+    if (!r.c) return;
+    const obj = {};
+    headers.forEach((h, j) => { obj[h] = r.c[j]?.v ?? null; });
+    if (Object.values(obj).some(v => v !== null)) data.push(obj);
+  });
+  return { headers, data };
+}
+
+// ═══════════════════════════════════════
+//  RFS GAP ANALYSIS
+// ═══════════════════════════════════════
+let rfsDonut, bastDonut, scChart;
+
+async function loadRFS() {
+  try {
+    const table = await gviz(CFG.rfsId, 'Detail Target RFS');
+    const { headers, data } = parseGviz(table);
+
+    // Map column names flexibly
+    const cReg  = headers.find(h => /regional/i.test(h));
+    const cGap  = headers.find(h => /gap analisis/i.test(h) && !/bast/i.test(h));
+    const cResp = headers.find(h => /responsible rfs/i.test(h));
+
+    if (!cReg || !cGap || !cResp) throw new Error('Kolom tidak ditemukan: ' + JSON.stringify(headers));
+
+    renderRFS(data, cReg, cGap, cResp);
+  } catch(e) {
+    console.error('RFS error:', e);
+    setNote('rfs-notes', '⚠ Gagal memuat data: ' + e.message);
+  }
+}
+
+function renderRFS(data, cReg, cGap, cResp) {
+  // Donut: by Responsible
+  const donutMap = {};
+  data.forEach(r => {
+    const resp = r[cResp] || 'Unknown';
+    donutMap[resp] = (donutMap[resp]||0) + 1;
+  });
+
+  // Sort by count desc
+  const donutEntries = Object.entries(donutMap).sort((a,b)=>b[1]-a[1]);
+  const dLabels = donutEntries.map(e=>e[0]);
+  const dVals   = donutEntries.map(e=>e[1]);
+  const dTotal  = dVals.reduce((s,v)=>s+v, 0);
+
+  document.getElementById('rfs-total').textContent = dTotal;
+  renderDonut('donut-rfs', dLabels, dVals, 'rfs');
+  renderLeg('leg-rfs', dLabels, dVals, dTotal);
+
+  // Pivot: Gap × Regional
+  const regions = [...new Set(data.map(r=>r[cReg]).filter(Boolean))].sort();
+  const gapVals = [...new Set(data.map(r=>r[cGap]).filter(Boolean))].sort();
+
+  // Update header columns dynamically
+  const thead = document.querySelector('#tbl-rfs thead tr');
+  thead.innerHTML = '<th>Row Labels</th>';
+  regions.forEach(rg => { const th=document.createElement('th'); th.textContent=rg; thead.appendChild(th); });
+  const thGT = document.createElement('th'); thGT.textContent='Grand Total'; thead.appendChild(thGT);
+
+  const pivot = {};
+  const rowTotals = {};
+  const colTotals = {};
+  data.forEach(r => {
+    const g = r[cGap]||'?';
+    const rg= r[cReg]||'?';
+    if(!pivot[g]) pivot[g]={};
+    pivot[g][rg] = (pivot[g][rg]||0)+1;
+    rowTotals[g] = (rowTotals[g]||0)+1;
+    colTotals[rg]= (colTotals[rg]||0)+1;
+  });
+
+  const tbody = document.getElementById('rfs-tbody');
+  tbody.innerHTML = '';
+
+  gapVals.forEach(g => {
+    const tr = document.createElement('tr');
+    tr.className = 'rg';
+    let html = `<td>${g}</td>`;
+    regions.forEach(rg => {
+      const v = pivot[g]?.[rg] || null;
+      html += `<td class="val-num">${v??''}</td>`;
+    });
+    html += `<td class="val-hi">${rowTotals[g]||''}</td>`;
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+
+  // Grand Total row
+  const gt = document.createElement('tr');
+  gt.className = 'rg';
+  let gtHtml = '<td>Grand Total</td>';
+  regions.forEach(rg => { gtHtml += `<td class="val-num">${colTotals[rg]||''}</td>`; });
+  gtHtml += `<td class="val-hi">${dTotal}</td>`;
+  gt.innerHTML = gtHtml;
+  tbody.appendChild(gt);
+}
+
+// ═══════════════════════════════════════
+//  BAST GAP ANALYSIS
+// ═══════════════════════════════════════
+async function loadBAST() {
+  try {
+    const table = await gviz(CFG.bastId, 'Detail Target BAST');
+    const { headers, data } = parseGviz(table);
+
+    const cReg  = headers.find(h => /regional/i.test(h));
+    const cGap  = headers.find(h => /gap analisis bast/i.test(h));
+    const cResp = headers.find(h => /responsible bast/i.test(h));
+
+    if (!cReg || !cGap || !cResp) throw new Error('Kolom tidak ditemukan: ' + JSON.stringify(headers));
+
+    renderBAST(data, cReg, cGap, cResp);
+  } catch(e) {
+    console.error('BAST error:', e);
+    setNote('bast-notes', '⚠ Gagal memuat data: ' + e.message);
+  }
+}
+
+function renderBAST(data, cReg, cGap, cResp) {
+  const donutMap = {};
+  data.forEach(r => {
+    const resp = r[cResp] || 'Unknown';
+    donutMap[resp] = (donutMap[resp]||0)+1;
+  });
+
+  const donutEntries = Object.entries(donutMap).sort((a,b)=>b[1]-a[1]);
+  const dLabels = donutEntries.map(e=>e[0]);
+  const dVals   = donutEntries.map(e=>e[1]);
+  const dTotal  = dVals.reduce((s,v)=>s+v,0);
+
+  document.getElementById('bast-total').textContent = dTotal;
+  renderDonut('donut-bast', dLabels, dVals, 'bast');
+  renderLeg('leg-bast', dLabels, dVals, dTotal);
+
+  const regions = [...new Set(data.map(r=>r[cReg]).filter(Boolean))].sort();
+  const gapVals = [...new Set(data.map(r=>r[cGap]).filter(Boolean))].sort();
+
+  const thead = document.querySelector('#tbl-bast thead tr');
+  thead.innerHTML = '<th>Row Labels</th>';
+  regions.forEach(rg => { const th=document.createElement('th'); th.textContent=rg; thead.appendChild(th); });
+  const thGT = document.createElement('th'); thGT.textContent='Grand Total'; thead.appendChild(thGT);
+
+  const pivot = {}, rowTotals = {}, colTotals = {};
+  data.forEach(r => {
+    const g  = r[cGap]||'?';
+    const rg = r[cReg]||'?';
+    if(!pivot[g]) pivot[g]={};
+    pivot[g][rg] = (pivot[g][rg]||0)+1;
+    rowTotals[g] = (rowTotals[g]||0)+1;
+    colTotals[rg]= (colTotals[rg]||0)+1;
+  });
+
+  const tbody = document.getElementById('bast-tbody');
+  tbody.innerHTML = '';
+
+  gapVals.forEach(g => {
+    const tr = document.createElement('tr');
+    tr.className = 'rg';
+    let html = `<td>${g}</td>`;
+    regions.forEach(rg => {
+      html += `<td class="val-num">${pivot[g]?.[rg]??''}</td>`;
+    });
+    html += `<td class="val-hi">${rowTotals[g]||''}</td>`;
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+
+  const gt = document.createElement('tr');
+  gt.className = 'rg';
+  let gtHtml = '<td>Grand Total</td>';
+  regions.forEach(rg => { gtHtml += `<td class="val-num">${colTotals[rg]||''}</td>`; });
+  gtHtml += `<td class="val-hi">${dTotal}</td>`;
+  gt.innerHTML = gtHtml;
+  tbody.appendChild(gt);
+}
+
+// ═══════════════════════════════════════
+//  S-CURVE
+// ═══════════════════════════════════════
+let scRaw = [];
+let activeR = 'all', activeP = 'all';
+
+// Parse Google Visualization date cell, e.g. "Date(2026,6,16)" (month is 0-indexed)
+function parseGvizDate(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'string' && v.startsWith('Date(')) {
+    const p = v.slice(5, -1).split(',').map(Number);
+    return new Date(p[0], p[1], p[2] || 1, p[3] || 0, p[4] || 0, p[5] || 0);
+  }
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+
+// Monday of the week containing date d
+function mondayOf(d) {
+  const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = dt.getDay() || 7;
+  if (day !== 1) dt.setDate(dt.getDate() - day + 1);
+  return dt;
+}
+function weekLabel(mon) { return mon.toLocaleDateString('id-ID', { day:'2-digit', month:'short' }); }
+function periodeLabel(d) { return d.toLocaleDateString('id-ID', { month:'short', year:'numeric' }); }
+
+async function loadSCurve() {
+  try {
+    // Reuse "Detail Target RFS" tab: RFS Date = actual completion, Plan RFS = target
+    const table = await gviz(CFG.rfsId, 'Detail Target RFS');
+    const { headers, data } = parseGviz(table);
+
+    const cReg  = headers.find(h => /regional/i.test(h));
+    const cRFSD = headers.find(h => /^rfs date/i.test(h.trim()));
+    const cPlan = headers.find(h => /plan rfs/i.test(h));
+
+    if (!cReg || !cRFSD || !cPlan) throw new Error('Kolom Regional / RFS Date / Plan RFS tidak ditemukan');
+
+    scRaw = data.map(d => {
+      const planDate = parseGvizDate(d[cPlan]);
+      const rfsDate  = parseGvizDate(d[cRFSD]);
+      return {
+        region: d[cReg] || 'Unknown',
+        planDate,
+        rfsDate,
+        periode: planDate ? periodeLabel(planDate) : '',
+      };
+    }).filter(d => d.planDate);
+
+    populatePeriode();
+    renderSC();
+  } catch(e) {
+    console.error('SC error:', e);
+    setNote('sc-notes', '⚠ S-Curve: ' + e.message);
+  }
+}
+
+function populatePeriode() {
+  const periodes = [...new Set(scRaw.map(d=>d.periode).filter(Boolean))]
+    .sort((a,b) => {
+      const da = scRaw.find(x=>x.periode===a).planDate;
+      const db = scRaw.find(x=>x.periode===b).planDate;
+      return da - db;
+    });
+  const sel = document.getElementById('selPeriode');
+  sel.innerHTML = '<option value="all">Semua Bulan</option>';
+  periodes.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    sel.appendChild(o);
+  });
+}
+
+function renderSC() {
+  const fd = scRaw.filter(d => {
+    const mR = activeR === 'all' || d.region === activeR;
+    const mP = activeP === 'all' || d.periode === activeP;
+    return mR && mP;
+  });
+
+  // Build weekly buckets from union of Plan RFS (target) and RFS Date (actual)
+  const weekMap = new Map(); // monday-timestamp -> {label, plan, actual}
+  fd.forEach(d => {
+    const pMon = mondayOf(d.planDate);
+    const pk = pMon.getTime();
+    if (!weekMap.has(pk)) weekMap.set(pk, { label: weekLabel(pMon), plan: 0, actual: 0 });
+    weekMap.get(pk).plan++;
+
+    if (d.rfsDate) {
+      const aMon = mondayOf(d.rfsDate);
+      const ak = aMon.getTime();
+      if (!weekMap.has(ak)) weekMap.set(ak, { label: weekLabel(aMon), plan: 0, actual: 0 });
+      weekMap.get(ak).actual++;
+    }
+  });
+
+  const weekKeys  = [...weekMap.keys()].sort((a,b) => a - b);
+  const weeks     = weekKeys.map(k => weekMap.get(k).label);
+  const rfsTotal  = weekKeys.map(k => weekMap.get(k).actual);
+  let cumR = 0, cumT = 0;
+  const rfsCum    = weekKeys.map(k => cumR += weekMap.get(k).actual);
+  const targetCum = weekKeys.map(k => cumT += weekMap.get(k).plan);
+
+  const lastRC  = rfsCum[rfsCum.length-1]     || 0;
+  const lastTC  = targetCum[targetCum.length-1]|| 0;
+  const gap     = lastRC - lastTC;
+  const ach     = lastTC ? Math.round((lastRC/lastTC)*100) : 0;
+
+  document.getElementById('k-rfs').textContent = lastRC;
+  document.getElementById('k-tgt').textContent = lastTC;
+  document.getElementById('k-gap').textContent = (gap>=0?'+':'')+gap;
+  document.getElementById('k-ach').textContent = ach+'%';
+  document.getElementById('k-gap').className = 'kv '+(gap>=0?'g':'r');
+
+  const opts = {
+    chart:{type:'line',height:300,background:'transparent',toolbar:{show:false},animations:{enabled:true,speed:500}},
+    series:[
+      {name:'RFS Total',        type:'bar',  data:rfsTotal  },
+      {name:'RFS Cumulative',   type:'line', data:rfsCum    },
+      {name:'Target Cumulative',type:'line', data:targetCum },
+    ],
+    colors:['#22c55e','#22c55e','#f59e0b'],
+    stroke:{width:[0,2,2],dashArray:[0,0,6],curve:'smooth'},
+    markers:{size:[0,3,0]},
+    xaxis:{categories:weeks,labels:{style:{colors:'#8b949e',fontSize:'11px'}},axisBorder:{color:'#30363d'},axisTicks:{color:'#30363d'}},
+    yaxis:{labels:{style:{colors:'#8b949e',fontSize:'11px'}},tickAmount:4},
+    grid:{borderColor:'#21262d',strokeDashArray:3},
+    fill:{opacity:[.3,1,1],type:['solid','solid','solid']},
+    plotOptions:{bar:{columnWidth:'40%',borderRadius:2}},
+    legend:{show:true,position:'bottom',labels:{colors:'#8b949e'},markers:{width:10,height:10},itemMargin:{horizontal:12}},
+    tooltip:{theme:'dark',shared:true,intersect:false},
+    theme:{mode:'dark'},
+  };
+
+  if (scChart) scChart.destroy();
+  scChart = new ApexCharts(document.getElementById('chart-sc'), opts);
+  scChart.render();
+}
+
+// ═══════════════════════════════════════
+//  DONUT + LEGEND
+// ═══════════════════════════════════════
+function renderDonut(elId, labels, vals, key) {
+  const total = vals.reduce((s,v)=>s+v,0);
+  const chart = new ApexCharts(document.getElementById(elId), {
+    chart:{type:'donut',height:185,background:'transparent',toolbar:{show:false},animations:{enabled:true,speed:600}},
+    series: vals,
+    labels: labels.map((l,i) => `${l}: ${total>0?((vals[i]/total)*100).toFixed(1):0}%`),
+    colors: PAL,
+    dataLabels:{enabled:false},
+    legend:{show:false},
+    stroke:{width:0},
+    plotOptions:{pie:{donut:{size:'62%',labels:{show:true,total:{show:true,label:'Total',color:'#8b949e',fontSize:'11px',formatter:()=>total}}}}},
+    tooltip:{theme:'dark',y:{formatter:v=>`${v} sites`}},
+    theme:{mode:'dark'}
+  });
+  if (key==='rfs' && rfsDonut) rfsDonut.destroy();
+  if (key==='bast'&& bastDonut) bastDonut.destroy();
+  chart.render();
+  if (key==='rfs') rfsDonut = chart;
+  else bastDonut = chart;
+}
+
+function renderLeg(elId, labels, vals, total) {
+  document.getElementById(elId).innerHTML = labels.map((l,i)=>`
+    <div class="li">
+      <span class="ld" style="background:${PAL[i%PAL.length]}"></span>
+      <span>${l}</span>
+      <span class="lv">${total>0?((vals[i]/total)*100).toFixed(1):0}%</span>
+    </div>`).join('');
+}
+
+function setNote(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = msg;
+}
+
+// ═══════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════
+document.querySelectorAll('.fb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeR = btn.dataset.r;
+    renderSC();
+  });
+});
+document.getElementById('selPeriode').addEventListener('change', e => {
+  activeP = e.target.value;
+  renderSC();
+});
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+async function init() {
+  const st = document.getElementById('statusText');
+  const lr = document.getElementById('lastRefresh');
+  st.innerHTML = '<span class="sp"></span>Memuat data…';
+
+  await Promise.all([ loadRFS(), loadBAST(), loadSCurve() ]);
+
+  st.textContent = '✓ Data berhasil dimuat dari Google Sheets';
+  lr.textContent = 'Refresh: ' + new Date().toLocaleTimeString('id-ID');
+}
+
+init();
+</script>
+</body>
+</html>
